@@ -1,0 +1,440 @@
+version: "0.6.0"
+kind: app
+app:
+  name: 离谱宇宙·接龙冒险
+  mode: advanced-chat
+  icon: 🪐
+  icon_background: '#E0F2FE'
+  icon_type: emoji
+  description: 输入三个不搭界的词，AI 续写一章离谱宇宙；世界观、人物与伏笔存进 PowerContext，下一轮（含新会话）自动接上。
+  use_icon_as_answer_icon: false
+dependencies: []
+
+workflow:
+  conversation_variables: []
+  environment_variables:
+    - id: 8f7c1a20-3b6d-4c11-9e2a-111111111111
+      name: POWERCONTEXT_BASE_URL
+      description: PowerContext Server 地址，本地默认 http://127.0.0.1:8000
+      selector: [env, POWERCONTEXT_BASE_URL]
+      value: 'http://127.0.0.1:8000'
+      value_type: string
+    - id: 8f7c1a20-3b6d-4c11-9e2a-222222222222
+      name: POWERCONTEXT_TOKEN
+      description: 服务端开启鉴权时才用：把两个 HTTP 节点 Header 里加一行 Authorization（默认 loopback 不鉴权，空 Bearer 是非法 Header 会直接失败）
+      selector: [env, POWERCONTEXT_TOKEN]
+      value: ''
+      value_type: secret
+    - id: 8f7c1a20-3b6d-4c11-9e2a-333333333333
+      name: POWERCONTEXT_SCOPE_ID
+      description: 这一个宇宙的 scope，换 scope 等于换一个宇宙
+      selector: [env, POWERCONTEXT_SCOPE_ID]
+      value: 'universe:lipu'
+      value_type: string
+
+  features:
+    file_upload:
+      enabled: false
+      allowed_file_extensions: []
+      allowed_file_types: []
+      allowed_file_upload_methods: []
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+    image:
+      enabled: false
+      number_limits: 3
+      transfer_methods: [local_file, remote_url]
+    opening_statement: '说出三个完全不搭界的词（例如：电梯、榴莲、前任），我把它们写成这个宇宙的第一章。'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - 电梯、榴莲、前任
+      - 泡面、月亮、广场舞
+      - 扫地机器人、寺庙、炒股
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+
+  graph:
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.7
+    edges:
+      - id: e-start-search
+        type: custom
+        source: n_start
+        sourceHandle: source
+        target: n_search
+        targetHandle: target
+        data:
+          sourceType: start
+          targetType: http-request
+          isInIteration: false
+          isInLoop: false
+      - id: e-search-parse
+        type: custom
+        source: n_search
+        sourceHandle: source
+        target: n_parse
+        targetHandle: target
+        data:
+          sourceType: http-request
+          targetType: code
+          isInIteration: false
+          isInLoop: false
+      - id: e-parse-llm
+        type: custom
+        source: n_parse
+        sourceHandle: source
+        target: n_llm
+        targetHandle: target
+        data:
+          sourceType: code
+          targetType: llm
+          isInIteration: false
+          isInLoop: false
+      - id: e-llm-pack
+        type: custom
+        source: n_llm
+        sourceHandle: source
+        target: n_pack
+        targetHandle: target
+        data:
+          sourceType: llm
+          targetType: code
+          isInIteration: false
+          isInLoop: false
+      - id: e-pack-save
+        type: custom
+        source: n_pack
+        sourceHandle: source
+        target: n_save
+        targetHandle: target
+        data:
+          sourceType: code
+          targetType: http-request
+          isInIteration: false
+          isInLoop: false
+      - id: e-save-answer
+        type: custom
+        source: n_save
+        sourceHandle: source
+        target: n_answer
+        targetHandle: target
+        data:
+          sourceType: http-request
+          targetType: answer
+          isInIteration: false
+          isInLoop: false
+
+    nodes:
+      # ---------- 1. 开始：收三个词 ----------
+      - id: n_start
+        type: custom
+        position: {x: 80, y: 260}
+        positionAbsolute: {x: 80, y: 260}
+        width: 244
+        height: 108
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        data:
+          type: start
+          title: 开始
+          desc: 收集这一轮的三个词
+          selected: false
+          variables:
+            - variable: words
+              label: 三个不搭界的词
+              type: text-input
+              required: true
+              max_length: 120
+              placeholder: 例：电梯、榴莲、前任
+              options: []
+
+      # ---------- 2. 读记忆：POST /v1/memory/search ----------
+      - id: n_search
+        type: custom
+        position: {x: 400, y: 260}
+        positionAbsolute: {x: 400, y: 260}
+        width: 244
+        height: 124
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        data:
+          type: http-request
+          title: 读取宇宙记忆
+          desc: POST /v1/memory/search，取回这个世界观里最近的设定与章节结尾
+          selected: false
+          method: post
+          url: '{{#env.POWERCONTEXT_BASE_URL#}}/v1/memory/search'
+          authorization:
+            type: no-auth
+            config: null
+          headers: |
+            Content-Type: application/json
+          params: ''
+          body:
+            type: raw-text
+            data: '{"scope_id": "{{#env.POWERCONTEXT_SCOPE_ID#}}", "query": "离谱宇宙 宇宙档案", "limit": 5, "mode": "auto"}'
+          retry_config:
+            max_retries: 1
+            retry_enabled: true
+            retry_interval: 500
+          ssl_verify: true
+          timeout:
+            connect: 10
+            read: 30
+            write: 30
+            max_connect_timeout: 0
+            max_read_timeout: 0
+            max_write_timeout: 0
+          variables: []
+
+      # ---------- 3. 整理记忆：JSON → 纯文本（异常/空结果都不编造） ----------
+      - id: n_parse
+        type: custom
+        position: {x: 720, y: 260}
+        positionAbsolute: {x: 720, y: 260}
+        width: 244
+        height: 54
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        data:
+          type: code
+          title: 整理记忆
+          desc: 把 /v1/memory/search 的返回压成可注入的纯文本；首次或服务不可用时明确说“没有既有设定”
+          selected: false
+          code_language: python3
+          variables:
+            - variable: memory_raw
+              value_selector: [n_search, body]
+              value_type: string
+            - variable: words
+              value_selector: [n_start, words]
+              value_type: string
+          outputs:
+            memory_text:
+              type: string
+              children: null
+            has_memory:
+              type: string
+              children: null
+            status:
+              type: string
+              children: null
+          code: |
+            import json
+
+            ARCHIVE_TAG = "\u3010\u79bb\u8c31\u5b87\u5b99\u00b7\u5b87\u5b99\u6863\u6848\u3011"
+
+            def main(memory_raw: str, words: str) -> dict:
+                # 1) 解析失败 / 服务报错 / 空结果，一律当作“这个宇宙还没有设定”
+                try:
+                    data = json.loads(memory_raw or "")
+                except Exception:
+                    return {
+                        "memory_text": "\uff08\u6ca1\u6709\u8bfb\u5230\u65e2\u6709\u7684\u5b87\u5b99\u8bbe\u5b9a\uff1a\u8fd9\u662f\u672c\u7ae0\u7b2c\u4e00\u6b21\u51fa\u573a\uff0c\u8bf7\u628a\u5b83\u5f53\u7b2c\u4e00\u7ae0\u6765\u5199\u3002\uff09",
+                        "has_memory": "no",
+                        "status": "parse_failed",
+                    }
+
+                hits = data.get("hits") or []
+                texts = []
+                for h in hits[:5]:
+                    mem = (h or {}).get("memory") or {}
+                    t = (mem.get("text") or "").strip()
+                    if not t:
+                        continue
+                    if t.startswith(ARCHIVE_TAG):
+                        t = t[len(ARCHIVE_TAG):].strip()
+                    texts.append(t[:700])
+
+                if not texts:
+                    return {
+                        "memory_text": "\uff08\u8fd9\u4e2a\u5b87\u5b99\u8fd8\u6ca1\u6709\u65e2\u6709\u8bbe\u5b9a\uff1a\u8fd9\u662f\u7b2c\u4e00\u7ae0\uff0c\u8bf7\u5efa\u7acb\u4e16\u754c\u89c2\u3001\u4eba\u7269\u4e0e\u4e00\u4e2a\u4f0f\u7b14\u3002\uff09",
+                        "has_memory": "no",
+                        "status": "empty",
+                    }
+
+                # 实测：检索结果按时间倒序，第 1 条就是最近写入的一章
+                blocks = []
+                for i, t in enumerate(texts):
+                    label = "\u6700\u8fd1\u4e00\u7ae0\uff08\u5fc5\u987b\u627f\u63a5\u5b83\u7684\u7ed3\u5c3e\u4e0e\u60ac\u5ff5\uff09" if i == 0 else "\u66f4\u65e9\u7684\u8bb0\u5f55 \u00b7 \u7b2c" + str(i + 1) + "\u8fd1"
+                    blocks.append("[" + label + "]\n" + t)
+
+                return {
+                    "memory_text": "\u4ee5\u4e0b\u662f\u8fd9\u4e2a\u5b87\u5b99\u5df2\u6709\u7684\u8bbe\u5b9a\u4e0e\u7ae0\u8282\u8bb0\u5f55\uff0c\u5fc5\u987b\u4e0e\u4e4b\u4fdd\u6301\u8fde\u8d2f\uff1a\n\n" + "\n\n".join(blocks),
+                    "has_memory": "yes",
+                    "status": "ok",
+                }
+
+      # ---------- 4. 续写一章 ----------
+      - id: n_llm
+        type: custom
+        position: {x: 1040, y: 260}
+        positionAbsolute: {x: 1040, y: 260}
+        width: 244
+        height: 90
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        data:
+          type: llm
+          title: 续写本章
+          desc: 用“三个词 + 既有设定”写一章；有记忆就承接，没记忆就开天辟地
+          selected: false
+          model:
+            provider: langgenius/openai/openai
+            name: gpt-4o-mini
+            mode: chat
+            completion_params:
+              temperature: 0.9
+              top_p: 0.95
+              max_tokens: 900
+          context:
+            enabled: false
+            variable_selector: []
+          vision:
+            enabled: false
+          variables: []
+          prompt_template:
+            - role: system
+              text: |
+                你是「离谱宇宙」的叙事引擎：把用户给的三个不搭界的词，写成同一个宇宙里的一章短篇。
+
+                规则：
+                1. 三个词都必须作为情节要素出现，不能只是罗列。
+                2. 若下文给出【既有设定】，必须沿用其中的人物、地名、伏笔与上一章结尾，不能重启世界观；若标注“没有既有设定”，就把它当第一章，新建世界观。
+                3. 每一章 300–600 字，结尾留一个具体悬念（不要写“欲知后事如何”这类套话）。
+                4. 正文之后单独一行写「本章新增设定：」，列 1–3 条这一章新定下的事实（人物名字、地点、规则、伏笔），供下一章记忆使用。
+                5. 不写作者署名、不写免责声明、不解释创作过程、不输出 markdown 代码块。
+            - role: user
+              text: |
+                本轮三个词：{{#n_start.words#}}
+
+                【既有设定】
+                {{#n_parse.memory_text#}}
+
+      # ---------- 5. 打包请求体：把正文安全转成 JSON 字符串 ----------
+      - id: n_pack
+        type: custom
+        position: {x: 1360, y: 260}
+        positionAbsolute: {x: 1360, y: 260}
+        width: 244
+        height: 54
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        data:
+          type: code
+          title: 打包记忆请求体
+          desc: 正文里有换行和引号，交给 json.dumps 转义，避免写库时 422
+          selected: false
+          code_language: python3
+          variables:
+            - variable: chapter
+              value_selector: [n_llm, text]
+              value_type: string
+          outputs:
+            chapter_json:
+              type: string
+              children: null
+            chars:
+              type: string
+              children: null
+          code: |
+            import json
+
+            ARCHIVE_TAG = "\u3010\u79bb\u8c31\u5b87\u5b99\u00b7\u5b87\u5b99\u6863\u6848\u3011\n"
+
+            def main(chapter: str) -> dict:
+                text = (chapter or "").strip()
+                # 8KB 上限：先加检索锚点，再按字节截断，留 500 字节给 JSON 包装
+                text = ARCHIVE_TAG + text
+                limit = 7400
+                if len(text.encode("utf-8")) > limit:
+                    text = text.encode("utf-8")[:limit].decode("utf-8", "ignore")
+                return {
+                    "chapter_json": json.dumps(text, ensure_ascii=False),
+                    "chars": str(len(text)),
+                }
+
+      # ---------- 6. 写回记忆：POST /v1/memory/remember ----------
+      - id: n_save
+        type: custom
+        position: {x: 1680, y: 260}
+        positionAbsolute: {x: 1680, y: 260}
+        width: 244
+        height: 124
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        data:
+          type: http-request
+          title: 写回宇宙记忆
+          desc: POST /v1/memory/remember，把这一章存成一条 Atomic Memory
+          selected: false
+          method: post
+          url: '{{#env.POWERCONTEXT_BASE_URL#}}/v1/memory/remember'
+          authorization:
+            type: no-auth
+            config: null
+          headers: |
+            Content-Type: application/json
+          params: ''
+          body:
+            type: raw-text
+            data: '{"scope_id": "{{#env.POWERCONTEXT_SCOPE_ID#}}", "kind": "story-chapter", "text": {{#n_pack.chapter_json#}}}'
+          retry_config:
+            max_retries: 1
+            retry_enabled: true
+            retry_interval: 500
+          ssl_verify: true
+          timeout:
+            connect: 10
+            read: 30
+            write: 30
+            max_connect_timeout: 0
+            max_read_timeout: 0
+            max_write_timeout: 0
+          variables: []
+
+      # ---------- 7. 输出 ----------
+      - id: n_answer
+        type: custom
+        position: {x: 2000, y: 260}
+        positionAbsolute: {x: 2000, y: 260}
+        width: 244
+        height: 102
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        data:
+          type: answer
+          title: 直接回复
+          desc: 输出本章，并告诉玩家怎么接着写
+          selected: false
+          answer: |
+            {{#n_llm.text#}}
+
+            ---
+            这个宇宙已经记住了这一章。想接着写？直接再发三个新词即可；换一个会话也一样接得上。
+          variables:
+            - variable: n_llm.text
+              value_selector: [n_llm, text]
