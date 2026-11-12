@@ -20,6 +20,10 @@ from powercontext.builtin.persistence.seekdb.profile import (
     SeekDBUnavailableError,
 )
 
+# Imported for its side effect: hybrid candidates are merged into a single native
+# statement for this profile.
+from powercontext.builtin.persistence.seekdb import hybrid  # noqa: F401  isort:skip
+
 __all__ = (
     "SeekDBConfig",
     "SeekDBProfile",
