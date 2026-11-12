@@ -226,83 +226,143 @@ def _query_terms(question: str) -> tuple[str, ...]:
 async def search_pdf_pages(memory, question: str, limit: int = 10) -> tuple[MemoryCitation, ...]:
     """Return up to limit distinct page citations ranked for the raw question."""
 
-    from powercontext.builtin.runtime import SearchMemoryRequest
-
     if not isinstance(question, str) or not question.strip():
         raise ValueError("question must be a non-empty string")  # noqa: TRY003
     if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
         raise ValueError("limit must be a positive integer")  # noqa: TRY003
 
-    pool_size = max(limit * 10, 100)
-    seen: dict[str, object] = {}
-    hits = list((await memory.search(SearchMemoryRequest(query=question, mode="fts", limit=pool_size))).hits)
-    for hit in hits:
-        seen.setdefault(hit.entry_id, hit)
-
     terms = _query_terms(question)
-    if len(seen) < pool_size and terms:
-        vocabulary = Counter(terms)
-        probes = [term for term, _ in sorted(vocabulary.items(), key=lambda item: (-len(item[0]), item[0]))[:5]]
-        probes.append(" ".join(terms))
-        for probe in probes:
-            if not probe.strip():
-                continue
-            page = await memory.search(SearchMemoryRequest(query=probe, mode="fts", limit=pool_size))
-            for hit in page.hits:
-                seen.setdefault(hit.entry_id, hit)
-
-    candidates = list(seen.values())
-    if not candidates:
+    corpus = await _page_corpus(memory)
+    if not corpus.entries:
         return ()
 
-    weighted = _idf(candidates, terms)
-    scored = sorted(candidates, key=lambda hit: (-_score(hit.text, terms, weighted), hit.entry_id))
+    ranked = _rank(corpus, terms)
+
     selected = []
     pages = set()
-    for hit in scored:
-        page_key = _page_key(hit.text)
+    for position in ranked:
+        entry = corpus.entries[position]
+        page_key = _page_key(_entry_text(entry))
         if page_key in pages:
             continue
         pages.add(page_key)
-        selected.append(hit)
+        selected.append(entry)
         if len(selected) >= limit:
             break
     return tuple(
-        MemoryCitation(memory_ref=hit.memory_ref, entry_id=hit.entry_id, entry_version_id=hit.entry_version_id)
-        for hit in selected
+        MemoryCitation(
+            memory_ref=entry.memory_ref,
+            entry_id=entry.entry.entry_id,
+            entry_version_id=entry.entry.entry_version_id,
+        )
+        for entry in selected
     )
+
+
+def _entry_text(entry) -> str:
+    return entry.entry.text if hasattr(entry, "entry") else entry.text
+
+
+class _PageCorpus:
+    """Cached token statistics for every indexed page in one scoped Memory."""
+
+    __slots__ = ("entries", "token_sets", "token_counts", "lengths", "headings", "average_length")
+
+    def __init__(self, entries) -> None:
+        self.entries = entries
+        self.token_sets = []
+        self.token_counts = []
+        self.lengths = []
+        self.headings = []
+        for entry in entries:
+            text = _entry_text(entry)
+            tokens = _terms(text)
+            counts = Counter(tokens)
+            self.token_sets.append(frozenset(counts))
+            self.token_counts.append(counts)
+            self.lengths.append(len(tokens))
+            self.headings.append(frozenset(tokens[:40]))
+        self.average_length = sum(self.lengths) / len(self.lengths) if self.lengths else 0.0
+
+
+async def _page_corpus(memory) -> _PageCorpus:
+    cache = getattr(memory, "_pdf_page_corpus", None)
+    if cache is not None:
+        return cache
+    page = await memory.list()
+    entries = tuple(page.entries)
+    corpus = _PageCorpus(entries)
+    try:
+        memory._pdf_page_corpus = corpus
+    except Exception:
+        pass
+    return corpus
+
+
+def _rank(corpus: _PageCorpus, terms: tuple[str, ...]) -> list[int]:
+    if not terms:
+        return list(range(len(corpus.entries)))
+    variants = {term: _variants(term) for term in terms}
+    total = len(corpus.entries)
+    idf = {}
+    for term, forms in variants.items():
+        matched = 0
+        for token_set in corpus.token_sets:
+            if forms & token_set:
+                matched += 1
+        idf[term] = math.log(1.0 + (total - matched + 0.5) / (matched + 0.5))
+    numbers = {
+        term
+        for term in terms
+        if term.isdigit() and len(term) >= 3 and not 1900 <= int(term) <= 2100
+    }
+    k1, b = 1.2, 0.75
+    scores = []
+    for position, token_counts in enumerate(corpus.token_counts):
+        length = corpus.lengths[position]
+        norm = k1 * (1.0 - b + b * (length / corpus.average_length if corpus.average_length else 1.0))
+        heading = corpus.headings[position]
+        score = 0.0
+        for term, forms in variants.items():
+            frequency = 0
+            for form in forms:
+                value = token_counts.get(form)
+                if value:
+                    frequency = value if value > frequency else frequency
+            if not frequency:
+                continue
+            score += idf[term] * (frequency * (k1 + 1.0)) / (frequency + norm)
+            if heading & forms:
+                score += 3.0 * idf[term]
+        if numbers:
+            score += 2.0 * sum(1 for number in numbers if number in token_counts)
+        scores.append(score)
+    return sorted(range(len(scores)), key=lambda position: (-scores[position], position))
+
+
+def _variants(term: str) -> frozenset[str]:
+    forms = {term}
+    if len(term) > 4:
+        if term.endswith("ies"):
+            forms.add(term[:-3] + "y")
+        if term.endswith("es"):
+            forms.add(term[:-2])
+        if term.endswith("s") and not term.endswith("ss"):
+            forms.add(term[:-1])
+    if len(term) > 5 and term.endswith("ing"):
+        forms.add(term[:-3])
+        forms.add(term[:-3] + "e")
+    if len(term) > 4 and term.endswith("ed"):
+        forms.add(term[:-2])
+        forms.add(term[:-1])
+    if len(term) > 5 and term.endswith("ly"):
+        forms.add(term[:-2])
+    return frozenset(forms)
 
 
 def _page_key(text: str) -> str:
     first_line, _, remainder = text.partition("\n")
     return f"{first_line}\x00{hashlib.blake2b(remainder.encode(), digest_size=16).hexdigest()}"
-
-
-def _idf(candidates, terms) -> dict[str, float]:
-    counts: Counter[str] = Counter()
-    for hit in candidates:
-        tokens = set(_terms(hit.text))
-        for term in terms:
-            if term in tokens:
-                counts[term] += 1
-    total = max(len(candidates), 1)
-    return {term: math.log(1.0 + total / (1.0 + counts[term])) for term in terms}
-
-
-def _score(text: str, terms: tuple[str, ...], weighted: dict[str, float]) -> float:
-    tokens = _terms(text)
-    frequency = Counter(tokens)
-    unique = set(tokens)
-    score = 0.0
-    for term in terms:
-        if term in unique:
-            score += weighted.get(term, 1.0) * (1.0 + min(frequency[term], 5) / 10.0)
-    for position, term in enumerate(terms):
-        if term.isdigit() and term in unique:
-            score += 3.0
-        if position + 1 < len(terms) and f"{term} {terms[position + 1]}" in text.lower():
-            score += 2.0
-    return score
 
 
 __all__ = [
