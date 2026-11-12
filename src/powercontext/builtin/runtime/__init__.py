@@ -386,7 +386,9 @@ __all__ = [
 ]
 
 # Installed last so the package namespace above is complete before the PreparedContext
-# builder is imported and its evidence-selection route is wired up.
+# builder and the runtime applications are imported.
+from .context_pack import install_context_pack as _install_context_pack
 from .evidence_selection import install_evidence_selection as _install_evidence_selection
 
+_install_context_pack()
 _install_evidence_selection()
