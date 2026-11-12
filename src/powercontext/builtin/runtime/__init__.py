@@ -384,3 +384,9 @@ __all__ = [
     "open_builtin_runtime",
     "preflight_builtin_runtime",
 ]
+
+# Installed last so the package namespace above is complete before the PreparedContext
+# builder is imported and its evidence-selection route is wired up.
+from .evidence_selection import install_evidence_selection as _install_evidence_selection
+
+_install_evidence_selection()
