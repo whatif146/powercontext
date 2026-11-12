@@ -385,10 +385,22 @@ __all__ = [
     "preflight_builtin_runtime",
 ]
 
-# Installed last so the package namespace above is complete before the PreparedContext
-# builder and the runtime applications are imported.
-from .context_pack import install_context_pack as _install_context_pack
+# Installed last so that the package namespace above is complete before the PreparedContext
+# builder is imported and its evidence-selection route is wired up.
 from .evidence_selection import install_evidence_selection as _install_evidence_selection
 
-_install_context_pack()
 _install_evidence_selection()
+
+from .context_pack import install_context_pack as _install_context_pack
+
+_install_context_pack()
+
+# Installed last so that the two count thresholds are visible on RuntimeConfig and
+# the pending Source window of every Scope is reconciled in the background.
+from .count_trigger import install_count_trigger as _install_count_trigger
+
+_install_count_trigger()
+
+from .source_lifecycle import install_source_lifecycle as _install_source_lifecycle
+
+_install_source_lifecycle()
