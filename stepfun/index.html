@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StepFun × seekdb · browser entry</title>
+  <style>
+    body { margin: 0; padding: 32px; background: #0f1115; color: #e7ecf5; font: 14px/1.7 system-ui, "Segoe UI", sans-serif; }
+    h1 { font-size: 18px; margin: 0 0 8px; }
+    p  { color: #9fb0c9; margin: 0 0 16px; }
+    a.home { display: inline-block; background: #2f7cf6; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 8px; margin-bottom: 18px; }
+    ul { color: #9fb0c9; }
+    code { color: #d7e0ee; }
+  </style>
+</head>
+<body>
+  <h1>StepFun × seekdb：浏览器端 embedding + 库内混合检索</h1>
+  <p>本目录是本题交付物。应用主入口在 <code>web/index.html</code>（由 <code>server/app.py</code> 作为 <code>/</code> 返回）。</p>
+  <a class="home" href="./web/index.html">打开应用（需先启动 seekdb 与 uvicorn）</a>
+  <ul>
+    <li>应用入口：<code>web/index.html</code> + <code>web/app.js</code>（浏览器端 embedding，<code>webgpu</code> 优先、<code>wasm</code> 降级）</li>
+    <li>后端：<code>server/app.py</code>（pymysql 连 seekdb，<code>DBMS_HYBRID_SEARCH.SEARCH</code> 单语句混合检索）</li>
+    <li>量化实测：<code>web/bench.html</code>；实测日志：<code>docs/evidence.md</code>；技术说明：<code>docs/tech-note.md</code></li>
+    <li>启动步骤：<code>README.md</code> §1–§3</li>
+  </ul>
+</body>
+</html>
