@@ -1,0 +1,123 @@
+{
+  "schema": "powercontext/stepfun/submission-results/v1",
+  "question": {
+    "id": "600073",
+    "name": "End-side AI inference performance + seekdb hybrid retrieval",
+    "total_score": 20
+  },
+  "team": {
+    "name": "星火辽源（单人队）",
+    "code": "AntTech_FG3WBV",
+    "member": "许耀元",
+    "repo": "https://github.com/whatif146/powercontext",
+    "branch": "2026-competition-ecosystem",
+    "assets_dir": "stepfun"
+  },
+  "app": {
+    "browser_entry": "stepfun/web/index.html",
+    "browser_code": ["stepfun/web/app.js", "stepfun/web/bench.js"],
+    "server_entry": "stepfun/server/app.py",
+    "db_schema": "stepfun/db/init.sql",
+    "start_command": "uvicorn server.app:app --host 127.0.0.1 --port 8099",
+    "db_start_command": "seekdb --base-dir /tmp/seekdb --port 2881",
+    "tech_note": "stepfun/docs/tech-note.md",
+    "self_check_log": "stepfun/docs/evidence.md",
+    "run_script": "stepfun/scripts/e2e_check.js"
+  },
+  "inference": {
+    "location": "browser",
+    "runtime": "Transformers.js 3.7.2 + ONNX Runtime Web (ort-wasm-simd-threaded.jsep)",
+    "model": "Xenova/all-MiniLM-L6-v2",
+    "model_revision": "751bff37182d3f1213fa05d7196b954e230abad9",
+    "dimensions": 384,
+    "quantization": "INT8 (onnx/model_quantized.onnx) vs FP32 (onnx/model.onnx)",
+    "remote_models_allowed": false,
+    "cloud_inference_calls": 0
+  },
+  "backends": {
+    "preferred": "webgpu",
+    "fallback": "wasm",
+    "selection_code": "stepfun/web/app.js: detectDevice() -> navigator.gpu.requestAdapter(); device 'webgpu' | 'wasm'",
+    "ui_indicator": "header pill #devicePill / #deviceVal + #fallbackNotice banner",
+    "measured_in_this_run": "wasm"
+,
+    "note": "Test host has no GPU, so the WASM fallback path is what was executed; the WebGPU path is selected when navigator.gpu + adapter are available. Force-gpu without WebGPU raises an explicit error instead of silently degrading."
+  },
+  "database": {
+    "engine": "seekdb 1.4.0 (native deployment, 127.0.0.1:2881)",
+    "table": "chunks",
+    "vector_column": "embedding VECTOR(384)",
+    "fulltext_index": "CREATE FULLTEXT INDEX ix_chunks_fts ON chunks (content) WITH PARSER SPACE",
+    "vector_index": "CREATE VECTOR INDEX ix_chunks_vec ON chunks (embedding) WITH (type=hnsw, distance=l2)",
+    "hybrid_search": "SELECT DBMS_HYBRID_SEARCH.SEARCH('chunks', body) / DBMS_HYBRID_SEARCH.GET_SQL('chunks', body)",
+    "hybrid_search_in_db": true,
+    "client_side_merge": false
+  },
+  "checks": [
+    {
+      "id": "1.1",
+      "name": "full-pipeline: import -> embed -> write seekdb -> query -> ranked results",
+      "status": "passed",
+      "evidence": "Stepfun/docs/evidence.md §1 logs: MODEL 1121ms, IMPORT batch1 +8 chunks, SEARCH 5 hits in 22ms, IMPORT2 +2 chunks (11 total), AFTER-REFRESH 5 hits"
+    },
+    {
+      "id": "2.2",
+      "name": "local inference: no cloud embedding API",
+      "status": "passed",
+      "evidence": "env.allowRemoteModels=false + browser network blocked except 127.0.0.1: OFFLINE-ENCODE dims=384 in 181ms, EXTERNAL REQUESTS: 0"
+    },
+    {
+      "id": "2.3",
+      "name": "quantization: INT8 model, size / quality comparison",
+      "status": "passed",
+      "evidence": "86.20 MB -> 21.91 MB (3.93x); encode 25.30 -> 23.30 ms per text; Top-5 agreement with FP32 = 94% on 10 fixed queries"
+    },
+    {
+      "id": "2.4",
+      "name": "WebGPU preferred, automatic WASM fallback with UI notice",
+      "status": "passed",
+      "evidence": "stepfun/web/app.js detectDevice(); header pill shows WASM and #fallbackNotice banner appears on this GPU-less host; force-gpu raises explicit error"
+    },
+    {
+      "id": "2.5",
+      "name": "seekdb stores vectors/text/metadata, hybrid retrieval done inside seekdb",
+      "status": "passed",
+      "evidence": "one request /api/search -> one statement DBMS_HYBRID_SEARCH.SEARCH; generated SQL shown in page details; renderHits() only renders returned order"
+    },
+    {
+      "id": "2.6",
+      "name": "incremental import + refresh: newly imported batch searchable",
+      "status": "passed",
+      "evidence": "batch2 import then page reload -> stats 11 chunks / 2 batch, batch2 content returned"
+    },
+    {
+      "id": "2.7",
+      "name": "reproducibility: documented start of app + db",
+      "status": "passed",
+      "evidence": "README.md §1-3 + scripts/download_assets.sh + assets/manifests/model-files.txt (size + sha256)"
+    },
+    {
+      "id": "3.1",
+      "name": "compliance: no cloud inference / no server precompute replay / no bypass of seekdb",
+      "status": "passed",
+      "evidence": "see stepfun/compliance-results.json (db stopped -> /api/search HTTP 500, no client-side fallback)"
+    },
+    {
+      "id": "3.2",
+      "name": "performance: measured before/after with medians",
+      "status": "passed",
+      "evidence": "see stepfun/performance-results.json (batch encode 93.7 -> 62.4 ms; retrieval p50 8.3 ms / max 18.1 ms)"
+    }
+  ],
+  "summary": {
+    "checks_total": 9,
+    "checks_passed": 9,
+    "self_score": 20,
+    "environment": {
+      "host": "cloud vm, 4 vCPU (2 cores), 4 GB RAM, no GPU",
+      "browser": "Chromium 147 headless (--disable-gpu)",
+      "date": "2026-11-13"
+    },
+    "notes": "All figures come from runs of this repository on the host above; no hand-written or server-side precomputed vectors are used."
+  }
+}
