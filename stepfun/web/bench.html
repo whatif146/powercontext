@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>StepFun × seekdb · 量化与延迟实测</title>
+  <style>
+    body { background: #0f1115; color: #e7ecf5; font: 14px/1.6 system-ui, sans-serif; margin: 0; padding: 20px; }
+    h1 { font-size: 15px; }
+    button { background: #2f7cf6; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+    pre { background: #0e1116; border: 1px solid #2a3040; border-radius: 8px; padding: 12px; white-space: pre-wrap; font-size: 12px; }
+  </style>
+</head>
+<body>
+<h1>量化与延迟实测（INT8 q8 vs FP32）</h1>
+<p>同标签页内加载两套权重，各跑 15 段语料 / 10 条查询 / 5 次库内检索；结果仅供评测参考。</p>
+<button id="run">开始测量</button>
+<pre id="out">未运行。</pre>
+<script type="module" src="./bench.js"></script>
+</body>
+</html>
