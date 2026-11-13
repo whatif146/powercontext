@@ -1,56 +1,33 @@
-{
-  "schema": "powercontext/stepfun/performance-results/v1",
-  "question_id": "600073",
-  "conditions": {
-    "device": "cloud vm, 4 vCPU (2 cores shared), 4 GB RAM, no GPU",
-    "browser": "Chromium 147 headless, --disable-gpu",
-    "backend": "wasm (onnxruntime-web, numThreads=1)",
-    "model": "Xenova/all-MiniLM-L6-v2 @ 751bff37182d3f1213fa05d7196b954e230abad9",
-    "corpus": "15 short chunks, 10 fixed queries, 11 chunks stored in seekdb for retrieval timing",
-    "repeats": "20 encode calls per dtype (median), 5 retrieval calls"
-  },
-  "model_size": {
-    "fp32_mb": 86.2,
-    "int8_mb": 21.91,
-    "compression_ratio": 3.93
-  },
-  "load_ms": { "fp32": 1085, "int8": 1001 },
-  "encode_ms_per_text_median": { "fp32": 25.3, "int8": 23.3 },
-  "encode_batch3_ms": { "fp32": 93.7, "int8": 62.4 },
-  "quality": {
-    "metric": "Top-5 agreement of INT8 vs FP32 over 10 fixed queries (cosine ranking)",
-    "int8_top5_agreement": "94%",
-    "per_query_percent": [100, 80, 100, 80, 100, 100, 100, 100, 100, 80]
-  },
-  "seekdb_retrieval_ms": { "samples": [8.6, 7.0, 18.1, 8.3, 6.7], "p50": 8.3, "max": 18.1 },
-  "optimizations": [
-    {
-      "id": "batch-embedding",
-      "before": "one extractor call per chunk (93.7 ms for 3 chunks, FP32)",
-      "after": "single extractor call for 3 chunks (62.4 ms, INT8)",
-      "gain": "-33% on the same workload"
+[
+  {
+    "backend": "wasm",
+    "question_id": "600073",
+    "run": "performance-2026-11-13",
+    "passed": true,
+    "conditions": {
+      "device": "cloud vm, 4 vCPU (2 cores shared), 4 GB RAM, no GPU",
+      "browser": "Chromium 147 headless, --disable-gpu",
+      "runtime": "onnxruntime-web, numThreads=1",
+      "model": "Xenova/all-MiniLM-L6-v2 @ 751bff37182d3f1213fa05d7196b954e230abad9",
+      "corpus": "15 short chunks; 10 fixed queries; 11 chunks in seekdb for retrieval timing",
+      "repeats": "20 encode calls per dtype (median reported), 5 retrieval calls"
     },
-    {
-      "id": "warmup",
-      "before": "first search paid ONNX kernel/thread-pool init (60-100 ms extra)",
-      "after": "3 warm-up encodes during import; first search no longer pays init cost",
-      "gain": "first-query latency now comparable to steady state"
+    "model_size": { "fp32_mb": 86.2, "int8_mb": 21.91, "compression_ratio": 3.93 },
+    "load_ms": { "fp32": 1085, "int8": 1001 },
+    "encode_ms_per_text_median": { "fp32": 25.3, "int8": 23.3 },
+    "encode_batch3_ms": { "fp32": 93.7, "int8": 62.4 },
+    "quality": {
+      "metric": "Top-5 agreement of INT8 vs FP32 over 10 fixed queries (cosine ranking)",
+      "int8_top5_agreement": "94%",
+      "per_query_percent": [100, 80, 100, 80, 100, 100, 100, 100, 100, 80]
     },
-    {
-      "id": "chunking",
-      "before": "one vector per whole document",
-      "after": "paragraph-level chunks up to 420 chars",
-      "gain": "query 'how many buttons does the remote have' hits the exact button paragraph as Top-1"
-    },
-    {
-      "id": "indexing",
-      "before": "table scan, no keyword scoring",
-      "after": "FULLTEXT (WITH PARSER SPACE) + VECTOR HNSW, single fused statement",
-      "gain": "retrieval p50 8.3 ms with both signals aligned in-db"
-    }
-  ],
-  "raw_reports": {
-    "bench_page": "stepfun/web/bench.html",
-    "log": "stepfun/docs/evidence.md"
+    "seekdb_retrieval_ms": { "samples": [8.6, 7.0, 18.1, 8.3, 6.7], "p50": 8.3, "max": 18.1 },
+    "optimizations": [
+      { "id": "batch-embedding", "before": "one extractor call per chunk (93.7 ms for 3 chunks, FP32)", "after": "single extractor call for 3 chunks (62.4 ms, INT8)", "gain": "-33% on the same workload" },
+      { "id": "warmup", "before": "first search paid ONNX kernel/thread-pool init (60-100 ms extra)", "after": "3 warm-up encodes during import; first search no longer pays init cost", "gain": "first-query latency comparable to steady state" },
+      { "id": "chunking", "before": "one vector per whole document", "after": "paragraph-level chunks up to 420 chars", "gain": "query about the remote's buttons hits the exact paragraph as Top-1" },
+      { "id": "indexing", "before": "table scan, no keyword scoring", "after": "FULLTEXT (WITH PARSER SPACE) + VECTOR HNSW, single fused statement", "gain": "retrieval p50 8.3 ms with both signals aligned in-db" }
+    ],
+    "raw_reports": { "bench_page": "stepfun/web/bench.html", "log": "stepfun/docs/evidence.md" }
   }
-}
+]

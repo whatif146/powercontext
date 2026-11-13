@@ -1,44 +1,46 @@
-{
-  "schema": "powercontext/stepfun/compliance-results/v1",
-  "question_id": "600073",
-  "bans": [
-    {
-      "id": "no-cloud-inference",
-      "rule": "100% of embedding must run in the user's browser",
-      "status": "passed",
-      "method": "Set env.allowRemoteModels=false and ran Chromium with --host-resolver-rules='MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'; then encoded a fresh text in a new tab",
-      "observed": "OFFLINE-ENCODE: {\"dims\":384,\"ms\":181}; EXTERNAL REQUESTS: 0",
-      "evidence": "stepfun/docs/evidence.md §2"
-    },
-    {
-      "id": "no-server-precompute-replay",
-      "rule": "server must not precompute vectors or replay stored results",
-      "status": "passed",
-      "method": "Inspect /api/search request path: the server accepts only query_text + query_vector computed in the tab for that request and never stores query vectors; /api/import accepts only vectors computed in the tab",
-      "observed": "server/app.py has no embedding model or cached answer set; every search recomputes the query vector client-side",
-      "evidence": "stepfun/server/app.py (/api/search, /api/import)"
-    },
-    {
-      "id": "no-bypass-of-seekdb",
-      "rule": "storage and retrieval must go through seekdb, no client-memory fallback",
-      "status": "passed",
-      "method": "Stopped seekdb while the app was running, then clicked Search",
-      "observed": "UI: '检索失败：/api/search -> HTTP 500'; backend log: Can't connect to MySQL server on '127.0.0.1'; no local fallback results",
-      "evidence": "stepfun/docs/evidence.md §6"
-    },
-    {
-      "id": "no-client-side-merge",
-      "rule": "keyword and vector ranking must be fused inside seekdb",
-      "status": "passed",
-      "method": "One /api/search call builds a body with query.match.content + knn.query_vector and executes DBMS_HYBRID_SEARCH.SEARCH once",
-      "observed": "generated SQL starts from (ifnull(_fts._keyword_score,0) + ifnull(_vs._semantic_score,0)) AS _score; web/app.js has no sort/merge code",
-      "evidence": "stepfun/docs/evidence.md §3"
-    }
-  ],
-  "summary": {
-    "bans_total": 4,
-    "bans_passed": 4,
-    "date": "2026-11-13",
-    "host": "cloud vm, 4 vCPU / 4 GB RAM / no GPU, Chromium 147 headless"
+[
+  {
+    "backend": "wasm",
+    "question_id": "600073",
+    "run": "compliance-self-check-2026-11-13",
+    "passed": true,
+    "compliance": [
+      {
+        "id": "no-cloud-inference",
+        "passed": true,
+        "rule": "100% of embedding must run in the user's browser",
+        "method": "env.allowRemoteModels=false + Chromium --host-resolver-rules='MAP * ~NOTFOUND, EXCLUDE 127.0.0.1', then encode a fresh text in a new tab",
+        "observed": "OFFLINE-ENCODE: {\"dims\":384,\"ms\":181}; EXTERNAL REQUESTS: 0",
+        "evidence": "stepfun/docs/evidence.md §2",
+        "code": "stepfun/web/app.js (env.allowRemoteModels = false; env.localModelPath = './models/')"
+      },
+      {
+        "id": "no-server-precompute-replay",
+        "passed": true,
+        "rule": "server must not precompute vectors or replay stored results",
+        "method": "Inspect request path: server has no embedding model and keeps no answer cache; /api/import only stores vectors sent by the tab, /api/search recomputes the query vector in the tab for every request",
+        "observed": "stepfun/server/app.py contains no model weights or cached result set",
+        "evidence": "stepfun/server/app.py",
+        "code": "stepfun/server/app.py (/api/import, /api/search)"
+      },
+      {
+        "id": "no-bypass-of-seekdb",
+        "passed": true,
+        "rule": "storage and retrieval must go through seekdb, no client-memory fallback",
+        "method": "Stopped seekdb while the app was running, then clicked Search",
+        "observed": "UI: \"检索失败：/api/search -> HTTP 500\"; backend log: Can't connect to MySQL server on '127.0.0.1'; no local fallback results shown",
+        "evidence": "stepfun/docs/evidence.md §6"
+      },
+      {
+        "id": "no-client-side-merge",
+        "passed": true,
+        "rule": "keyword and vector ranking must be fused inside seekdb",
+        "method": "One /api/search call builds a body with query.match.content + knn.query_vector and executes DBMS_HYBRID_SEARCH.SEARCH once",
+        "observed": "generated SQL uses (ifnull(_fts._keyword_score,0) + ifnull(_vs._semantic_score,0)) AS _score; web/app.js has no sort/merge code",
+        "evidence": "stepfun/docs/evidence.md §3"
+      }
+    ],
+    "items_total": 4,
+    "items_passed": 4
   }
-}
+]
