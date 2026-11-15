@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>薄弱点雷达 · WeakRadar</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>薄弱点雷达</h1>
+    <p class="subtitle">基于 PowerContext 记忆的复习教练 · SM-2 间隔重复</p>
+  </div>
+  <div class="status">
+    <span id="health-dot" class="dot dot-unknown" title="正在检测 PowerContext 连接…"></span>
+    <span id="health-text">检测中</span>
+    <span id="scope-info" class="scope-info"></span>
+  </div>
+</header>
+
+<div id="error-bar" class="error-bar" hidden role="alert" aria-live="assertive">
+  <span class="error-icon" aria-hidden="true">!</span>
+  <span id="error-text"></span>
+  <button id="error-close" class="error-close" type="button" title="关闭">×</button>
+</div>
+
+<main class="layout">
+
+  <section class="col-main panel panel-today">
+    <div class="panel-head">
+      <h2>今日复习</h2>
+      <div class="row-actions">
+        <div id="subject-chips" class="chips"></div>
+        <button id="btn-refresh-today" class="btn btn-ghost" type="button">刷新</button>
+      </div>
+    </div>
+
+    <form id="subject-form" class="subject-form" autocomplete="off">
+      <input id="custom-subject" type="text" maxlength="40" placeholder="其他科目名（如 操作系统）" aria-label="自定义科目">
+      <button id="btn-add-subject" class="btn btn-small" type="submit">切换科目</button>
+    </form>
+
+    <div id="today-stats" class="stats"></div>
+    <div id="review-log" class="review-log" hidden></div>
+    <div id="today-context" class="context" hidden></div>
+    <div id="card-list" class="cards"></div>
+    <p id="today-empty" class="empty" hidden></p>
+  </section>
+
+  <div class="col-side">
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>粘贴笔记导入</h2>
+        <button id="btn-sample" class="btn btn-ghost btn-small" type="button">填入示例</button>
+      </div>
+      <p class="hint">每行写一个知识点即可，支持 <code>- 要点</code>、<code>1. 要点</code>、<code>术语：解释</code>。重复粘贴不会生成第二张卡。</p>
+      <textarea id="notes-text" rows="8" placeholder="红黑树插入：先按二叉搜索树插入，再通过变色与旋转恢复性质&#10;B+ 树：非叶子节点只存索引，叶子节点用指针串联，适合范围查询"></textarea>
+      <div class="row-actions">
+        <button id="btn-import" class="btn btn-primary" type="button">导入为复习卡片</button>
+      </div>
+      <div id="notes-result" class="result" hidden></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>记忆召回</h2>
+      </div>
+      <p class="hint">直接查 PowerContext 的记忆库，验证「换一天、换会话仍能召回你上次卡在哪」。</p>
+      <div class="recall-form">
+        <input id="recall-query" type="text" maxlength="256" placeholder="例如：卡住 旋转 到期" aria-label="召回关键词">
+        <input id="recall-limit" type="number" min="1" max="50" value="10" aria-label="返回条数">
+        <button id="btn-recall" class="btn btn-primary" type="button">搜索记忆</button>
+      </div>
+      <div id="recall-result" class="result" hidden></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>记忆原文</h2>
+        <div class="row-actions">
+          <button id="btn-raw-refresh" class="btn btn-ghost btn-small" type="button">重新拉取</button>
+          <button id="btn-raw-toggle" class="btn btn-ghost btn-small" type="button">展开</button>
+        </div>
+      </div>
+      <p class="hint">评审核对存储用：这里是从 <code>/api/memory/raw</code> 原样取回的 memory entries。</p>
+      <div id="raw-panel" hidden>
+        <div id="raw-meta" class="raw-meta"></div>
+        <div id="raw-list" class="raw-list"></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<noscript><p class="empty">本页面需要启用 JavaScript 才能与后端交互。</p></noscript>
+
+<script src="app.js"></script>
+</body>
+</html>
