@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>薄弱点雷达 WeakRadar · 基于 PowerContext 记忆的复习教练</title>
+<meta name="description" content="第六届 OceanBase 数据库大赛 Qoder 赛题（600078）参赛作品：把笔记切成知识点卡片，按 SM-2 排期复习，卡片状态与复习记录全部写进 PowerContext 记忆，换一天、换设备仍能召回你上次卡在哪。">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2358a6ff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%23f85149' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23e6edf3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip" href="#about">跳到正文</a>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <p class="eyebrow">第六届 OceanBase 数据库大赛 · Qoder 赛题 600078</p>
+    <h1>薄弱点雷达 <span class="en">WeakRadar</span></h1>
+    <p class="lede">只复习你真正不会的那几句。<br>
+      笔记切成知识点卡片，每次 0–5 自评按 SM-2 算出下次复习时间，而卡片状态与复习记录<b>全部写进 PowerContext 记忆</b>——换一天、换一台机器、换一个 Agent 打开，它仍然记得你上次卡在哪。</p>
+    <ul class="badges">
+      <li>队伍 <b>星火辽源</b>（单人）</li>
+      <li>赛号 <b>AntTech_FG3WBV</b></li>
+      <li>作者 <b>许耀元</b> · 华南理工大学 计算机科学与技术 2024 级</li>
+    </ul>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com/whatif146/powercontext/tree/2026-competition-ecosystem/qoder">代码仓库</a>
+      <a class="btn btn-ghost" href="#run">三步跑起来</a>
+      <a class="btn btn-ghost" href="#powercontext">记忆怎么起作用</a>
+    </div>
+  </div>
+</header>
+
+<nav class="topnav" aria-label="页面导航">
+  <div class="wrap nav-inner">
+    <a href="#about">项目简介</a>
+    <a href="#pain">真实痛点</a>
+    <a href="#features">核心功能</a>
+    <a href="#powercontext">技术结合</a>
+    <a href="#screens">界面截图</a>
+    <a href="#run">运行三步</a>
+    <a href="#repo">代码仓库</a>
+  </div>
+</nav>
+
+<main class="wrap" id="about">
+
+  <section class="sec" aria-labelledby="h-about">
+    <h2 id="h-about"><span class="num">01</span>项目简介</h2>
+    <div class="cols">
+      <div>
+        <p>WeakRadar 是一个「复习教练」：粘贴一段课程笔记或错题，系统把它切成知识点卡片；
+          复习时卡片正面只给知识点，翻面才看到原句；你给自己打 0–5 分，系统按 SM-2 间隔重复
+          排出这张卡的下一次到期时间。</p>
+        <p>它特别的地方是<b>没有自己的数据库</b>。每张卡的调度状态（<code>due</code> / <code>ease</code> /
+          <code>interval</code> / <code>reps</code>）和每次自评日志，都是一条 PowerContext 记忆条目；
+          「今天该复习什么」是把记忆列出来解析出来的，「我上次卡在哪」是向记忆搜索出来的。</p>
+      </div>
+      <figure class="chain">
+        <div class="flow">
+          <span>知识点</span><em>→</em>
+          <span>0–5 自评</span><em>→</em>
+          <span>SM-2 到期时间</span><em>→</em>
+          <b>PowerContext 记忆</b>
+        </div>
+        <div class="flow back"><b>PowerContext 记忆</b><em>→</em><span>召回薄弱点</span><em>→</em><span>今日复习清单</span></div>
+        <figcaption>整条链路唯一的状态存储是 PowerContext Memory，应用只做解析与编排。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sec" id="pain" aria-labelledby="h-pain">
+    <h2 id="h-pain"><span class="num">02</span>解决的真实痛点</h2>
+    <p class="sub">大二计科学生的资料并不缺，缺的是「知道自己哪里不会」并且「不会丢」。</p>
+    <div class="grid">
+      <article class="card">
+        <h3>不知道哪些是真不会</h3>
+        <p>数据结构、计组、概率论三科笔记散在纸质本、Notion、微信群和 PPT 里。复习时只能从头看，
+          时间大量花在已经掌握的内容上。</p>
+        <p class="turn">→ 只推到期的卡片，而且翻面前不给答案，避免「看着答案觉得会」。</p>
+      </article>
+      <article class="card">
+        <h3>卡过的点，第二天就忘了自己卡过</h3>
+        <p>上周明明卡在「红黑树 case2 / case3 的旋转判断」，这周打开资料，已经想不起自己当时卡在哪，
+          于是同一处反复卡。</p>
+        <p class="turn">→ 低分自评作为记忆条目留下痕迹，可随时用关键词把它召回。</p>
+      </article>
+      <article class="card">
+        <h3>换个设备 / 会话，进度全丢</h3>
+        <p>复习进度通常绑在某个 App 或某个本地文件里。换电脑、重装环境、换一个助手，等于从零开始。</p>
+        <p class="turn">→ 进度存在 PowerContext 的记忆作用域里，任何客户端读同一个 Scope 就能接上。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec" id="features" aria-labelledby="h-features">
+    <h2 id="h-features"><span class="num">03</span>核心功能</h2>
+    <div class="grid grid-4">
+      <article class="card feat">
+        <p class="k">01</p>
+        <h3>笔记切卡片</h3>
+        <p>粘贴一段笔记，按编号 / 分号 / 句号 / 行首 <code>- 要点</code> 切成知识点卡片，
+          重复内容自动跳过——重复粘贴不会生成第二张卡。</p>
+      </article>
+      <article class="card feat">
+        <p class="k">02</p>
+        <h3>今日复习（SM-2）</h3>
+        <p>按 SM-2 算出的 <code>due</code> 挑出到期卡片。正面只有知识点，翻面才见原句，
+          复习前先装配一段「今日上下文」。</p>
+      </article>
+      <article class="card feat">
+        <p class="k">03</p>
+        <h3>0–5 六档自评</h3>
+        <p>「完全没印象 → 轻松掌握」六档。评分更新 <code>ease</code> / <code>interval</code> /
+          <code>reps</code> 并回写卡片，同时追加一条复习日志。</p>
+      </article>
+      <article class="card feat">
+        <p class="k">04</p>
+        <h3>记忆召回与核对</h3>
+        <p>关键词召回历史薄弱点，返回 <code>score</code> 与 <code>matched_by</code>；
+          记忆原文面板直接展示 memory 条目，评审核对「记忆是否真的在用」。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec" id="powercontext" aria-labelledby="h-pc">
+    <h2 id="h-pc"><span class="num">04</span>技术结合：PowerContext 记忆读写如何起作用</h2>
+    <p class="sub">调度状态的唯一事实来源是 PowerContext Memory。所有上游调用集中在
+      <code>server/powercontext_client.py</code>，不引入额外数据库。</p>
+
+    <div class="cols io">
+      <div class="panel">
+        <h3><span class="tag write">写</span>自评结果如何进入记忆</h3>
+        <ol class="steps-sm">
+          <li><b>建工作区</b>：每个科目一个 Scope，幂等键 <code>weakradar-&lt;科目&gt;</code>，重复点击不会建出两个。</li>
+          <li><b>记卡片</b>：导入笔记后，每条知识点以 <code>kind=review_card</code> 写成一行结构化文本。</li>
+          <li><b>改记忆</b>：自评后用上游返回的完整 <code>citation</code> 走 <code>entries/revise</code> 改写卡片文本，版本号推进——不是新增一张卡。</li>
+          <li><b>留日志</b>：每次自评再追加一条 <code>kind=review_log</code>，历史低分点永久留在记忆里。</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3><span class="tag read">读</span>记忆如何变成今天的复习</h3>
+        <ol class="steps-sm">
+          <li><b>算今日</b>：<code>entries/list</code> 列出该 Scope 全部条目，本地按 <code>card|</code> 前缀解析出到期卡片。</li>
+          <li><b>装配上下文</b>：复习前调用 <code>/v1/context/prepare</code>，页面展示装配结果与条目引用。</li>
+          <li><b>召回薄弱点</b>：<code>/v1/memory/search</code> 关键词命中「卡住 / 旋转 / 到期」这类词，把历史薄弱点挠回来。</li>
+          <li><b>可核对</b>：<code>/api/memory/raw</code> 原样返回记忆条目；每张卡显示自己的 <code>mem_ent_…</code> 条目号，自评后 <code>due</code>/<code>ease</code>/<code>reps</code> 的变化在卡片与记忆原文里同时可见。</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <caption>调用的 PowerContext 接口</caption>
+        <thead>
+          <tr><th scope="col">环节</th><th scope="col">接口</th><th scope="col">作用</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>建工作区</td><td><code>POST /v1/scopes</code></td><td>每个科目一个 Scope，幂等键 <code>weakradar-&lt;科目&gt;</code></td></tr>
+          <tr><td>记卡片</td><td><code>POST /v1/memory/remember</code></td><td><code>kind=review_card</code>，写入卡片文本</td></tr>
+          <tr><td>算今日</td><td><code>POST /v1/memory/entries/list</code></td><td>列出全部条目，本地解析出到期卡片</td></tr>
+          <tr><td>自评回写</td><td><code>POST /v1/memory/entries/revise</code></td><td>按 <code>citation</code> 改卡片文本，版本推进</td></tr>
+          <tr><td>复习日志</td><td><code>POST /v1/memory/remember</code></td><td><code>kind=review_log</code>，追加一条评分记录</td></tr>
+          <tr><td>记忆召回</td><td><code>POST /v1/memory/search</code></td><td>关键词召回薄弱点，返回 score / matched_by</td></tr>
+          <tr><td>上下文装配</td><td><code>POST /v1/context/prepare</code></td><td>复习前装配上下文，证明记忆被复用</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel code-panel">
+      <h3>存进记忆里的卡片长这样</h3>
+      <pre><code>card|subject=数据结构|topic=红黑树插入|due=2026-11-16|ease=2.5|interval=3|reps=2|last=4|note=&lt;原句摘要&gt;</code></pre>
+      <p class="hint">一行文本既是卡片内容，也是调度状态。<code>due</code> 为 ISO 日期，<code>ease</code> 为 SM-2 难度因子（1.3–2.8），
+        <code>interval</code> 为天数，<code>last</code> 为上次评分。<b>因此「记忆」不是装饰：删掉记忆，今日清单就空了。</b></p>
+    </div>
+  </section>
+
+  <section class="sec" id="screens" aria-labelledby="h-screens">
+    <h2 id="h-screens"><span class="num">05</span>界面截图</h2>
+    <p class="sub">纯静态前端，深色中文界面，移动端可用。点击图片可在新窗口查看原图。</p>
+    <div class="shots">
+      <figure class="shot">
+        <a href="img/ui-home.png">
+          <img src="img/ui-home.png" alt="WeakRadar 首页：今日复习列表、科目切换、粘贴笔记导入与记忆召回面板" width="829" height="870" loading="lazy">
+        </a>
+        <figcaption><b>主界面</b>选择科目后列出今日到期卡片，右侧是笔记导入、记忆召回与记忆原文面板。</figcaption>
+      </figure>
+      <figure class="shot">
+        <a href="img/ui-flipped.png">
+          <img src="img/ui-flipped.png" alt="卡片翻面状态：显示笔记原句与 0 到 5 六档自评按钮" width="829" height="870" loading="lazy">
+        </a>
+        <figcaption><b>翻面自评</b>正面只有知识点，翻面才出现原句和 0–5 六档自评按钮。</figcaption>
+      </figure>
+      <figure class="shot">
+        <a href="img/ui-after-review.png">
+          <img src="img/ui-after-review.png" alt="自评后的卡片：显示新的到期日期、难度因子、复习次数与记忆条目号" width="829" height="870" loading="lazy">
+        </a>
+        <figcaption><b>自评之后</b>卡片上的 <code>due</code> / <code>ease</code> / <code>reps</code> 与 <code>mem_ent_…</code> 条目号同步更新。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sec" id="run" aria-labelledby="h-run">
+    <h2 id="h-run"><span class="num">06</span>运行三步</h2>
+    <div class="steps">
+      <article class="step">
+        <p class="k">1</p>
+        <h3>启动 PowerContext 服务</h3>
+        <p>使用赛事官方开源的 PowerContext（Apache-2.0），本项目未修改其源码。默认监听
+          <code>127.0.0.1:8000</code>。</p>
+        <pre><code>powercontext server</code></pre>
+      </article>
+      <article class="step">
+        <p class="k">2</p>
+        <h3>启动应用</h3>
+        <p>上游地址读环境变量，不硬编码：<code>POWERCONTEXT_SERVER_URL</code>，默认
+          <code>http://127.0.0.1:8000</code>。仓库根目录执行：</p>
+        <pre><code>uv run --with fastapi --with uvicorn \
+  --with httpx --with pydantic python -m server.app</code></pre>
+      </article>
+      <article class="step">
+        <p class="k">3</p>
+        <h3>打开页面</h3>
+        <p>访问 <a class="inlink" href="http://127.0.0.1:8080">http://127.0.0.1:8080</a>，
+          选科目建 Scope → 粘贴笔记切卡片 → 今日复习里翻面自评。顶部的绿色圆点表示与 PowerContext 连通。</p>
+        <pre><code>http://127.0.0.1:8080</code></pre>
+      </article>
+    </div>
+    <p class="hint">依赖 Python 3.12+，只用 <code>uv run --with …</code> 启动，不额外建 venv。后端 9 条路由，
+      <code>GET /api/health</code> 可查看 PowerContext 就绪状态与当前 Scope。</p>
+  </section>
+
+  <section class="sec" id="repo" aria-labelledby="h-repo">
+    <h2 id="h-repo"><span class="num">07</span>代码仓库</h2>
+    <div class="cols repo-cols">
+      <div class="panel repo-panel">
+        <h3>源码位置</h3>
+        <p>代码在 PowerContext 官方仓库的 <code>2026-competition-ecosystem</code> 分支下 <code>qoder/</code> 目录，
+          含 <code>README.md</code>、<code>SPEC.md</code>、后端 <code>server/</code>、前端 <code>web/</code> 与验证材料 <code>docs/</code>。</p>
+        <a class="btn btn-primary" href="https://github.com/whatif146/powercontext/tree/2026-competition-ecosystem/qoder">
+          github.com/whatif146/powercontext · qoder ↗
+        </a>
+      </div>
+      <div class="panel">
+        <h3>来源与复用说明</h3>
+        <ul class="plain">
+          <li>记忆服务使用赛事官方开源项目 PowerContext（Apache-2.0），本项目仅通过其 HTTP API 接入，<b>未修改其源码</b>。</li>
+          <li>数据来源为作者本人《数据结构》《计算机组成原理》《概率论》课程笔记片段与错题，无第三方版权内容。</li>
+          <li>项目代码由 Qoder（CLI 无头模式）生成初版并由作者评审修正，过程见仓库 <code>docs/qoder-dev-log.md</code>。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <p class="uid">Qoder 账号 UID <b>1614412229476632</b></p>
+    <p>薄弱点雷达 WeakRadar · 第六届 OceanBase 数据库大赛 Qoder 赛题（600078）· 队伍 星火辽源 · 赛号 AntTech_FG3WBV</p>
+    <p><a href="https://github.com/whatif146/powercontext/tree/2026-competition-ecosystem/qoder">代码仓库</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
