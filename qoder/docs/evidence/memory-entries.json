@@ -1,0 +1,213 @@
+{
+  "memory": {
+    "family": "memory",
+    "artifact_id": "memory",
+    "revision": 19
+  },
+  "entries": [
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_06b20cf479194658b4dafd49bb14d2c6",
+        "entry_version_id": "mem_ver_6b8b0369c68a4428a6b0920caaadc979"
+      },
+      "version": 2,
+      "kind": "review_card",
+      "text": "card|subject=数据结构|topic=拓扑排序 Kahn 算法入度更新漏边|due=2026-11-16|ease=2.6|interval=1|reps=1|last=5|note=拓扑排序 Kahn 算法入度更新漏边",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_10ce32668a814a07bd9667b1f77ad36b",
+        "entry_version_id": "mem_ver_2ede300c1af642a38da78d82b3f006f5"
+      },
+      "version": 1,
+      "kind": "review_log",
+      "text": "log|subject=数据结构|topic=并查集路径压缩的时间复杂度是 O(alpha(n))|entry=mem_ent_a3ad5f066b1b474e856d1988865f753b|score=2|interval=1|due=2026-11-16|at=2026-11-15T11:01:46",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_171cd251b63f45edb65e94752018168b",
+        "entry_version_id": "mem_ver_d6ae95edd7f34fa897ec5da1698dad46"
+      },
+      "version": 2,
+      "kind": "review_card",
+      "text": "card|subject=数据结构|topic=B+ 树|due=2026-11-16|ease=2.6|interval=1|reps=1|last=5|note=B+ 树：非叶子节点只存索引，叶子节点用指针串联",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_1d2f24c645074fbb832e181eb5f32d12",
+        "entry_version_id": "mem_ver_ce92f49ad3ca4124b293cb1baea5a4f5"
+      },
+      "version": 1,
+      "kind": "review_log",
+      "text": "log|subject=数据结构|topic=拓扑排序 Kahn 算法入度更新漏边|entry=mem_ent_06b20cf479194658b4dafd49bb14d2c6|score=5|interval=1|due=2026-11-16|at=2026-11-15T11:14:14",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_229abf037c8c4b5b9f050a82bcb87b9d",
+        "entry_version_id": "mem_ver_2b62f6e9154f4e7195873bb6e59cee02"
+      },
+      "version": 1,
+      "kind": "review_log",
+      "text": "log|subject=数据结构|topic=红黑树插入|entry=mem_ent_ea4c891277604066a1c4497717bc1e31|score=5|interval=1|due=2026-11-16|at=2026-11-15T11:18:14",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_5265d195cd7347febf7cd62f3e843b0f",
+        "entry_version_id": "mem_ver_2945b454bbfb4715a9a65189e9117a6b"
+      },
+      "version": 1,
+      "kind": "review_log",
+      "text": "log|subject=数据结构|topic=拓扑排序|entry=mem_ent_c26175e0f1974650ba63ce2d630ba1c4|score=5|interval=1|due=2026-11-16|at=2026-11-15T11:12:16",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_a3ad5f066b1b474e856d1988865f753b",
+        "entry_version_id": "mem_ver_e54df39329e243229ff339fbb70e8457"
+      },
+      "version": 2,
+      "kind": "review_card",
+      "text": "card|subject=数据结构|topic=并查集路径压缩的时间复杂度是 O(alpha(n))|due=2026-11-16|ease=2.16|interval=1|reps=0|last=2|note=并查集路径压缩的时间复杂度是 O(alpha(n))，写不严谨",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_bbdfa9ca7143420b8ae72a55f2e2530f",
+        "entry_version_id": "mem_ver_aa41db74358943459ee461ff725a21c5"
+      },
+      "version": 1,
+      "kind": "preference",
+      "text": "pref|max_cards_per_day=20",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_c26175e0f1974650ba63ce2d630ba1c4",
+        "entry_version_id": "mem_ver_a703d1874d0641f8ba6cb98cced690c4"
+      },
+      "version": 2,
+      "kind": "review_card",
+      "text": "card|subject=数据结构|topic=拓扑排序|due=2026-11-16|ease=2.6|interval=1|reps=1|last=5|note=拓扑排序：反复删除入度为 0 的顶点，仍有剩余说明有环",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_cb371db0e75b405eaade529ddb62bd0c",
+        "entry_version_id": "mem_ver_6d3a466b770c4e8286aaa2485109d799"
+      },
+      "version": 1,
+      "kind": "review_log",
+      "text": "log|subject=数据结构|topic=B+ 树|entry=mem_ent_171cd251b63f45edb65e94752018168b|score=5|interval=1|due=2026-11-16|at=2026-11-15T11:09:44",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_ea4c891277604066a1c4497717bc1e31",
+        "entry_version_id": "mem_ver_4e12a1cf5887457f895573354cbc13b2"
+      },
+      "version": 2,
+      "kind": "review_card",
+      "text": "card|subject=数据结构|topic=红黑树插入|due=2026-11-16|ease=2.6|interval=1|reps=1|last=5|note=红黑树插入：case2/case3 旋转判断总记混",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    },
+    {
+      "citation": {
+        "memory_ref": {
+          "family": "memory",
+          "artifact_id": "memory",
+          "revision": 19
+        },
+        "entry_id": "mem_ent_f3ada47de8254c2abf6b785e787c4758",
+        "entry_version_id": "mem_ver_2a167f2d8ca14a00be3062a736e00170"
+      },
+      "version": 1,
+      "kind": "review_card",
+      "text": "card|subject=数据结构|topic=红黑树插入|due=2026-11-15|ease=2.5|interval=0|reps=0|last=0|note=红黑树插入：先按二叉搜索树规则插入并着红色，再通过重新着色与旋转恢复性质",
+      "state": "active",
+      "source_refs": [],
+      "artifact_refs": []
+    }
+  ]
+}
