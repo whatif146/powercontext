@@ -38,7 +38,7 @@ def _timeout() -> float:
 
 
 class PowerContextError(RuntimeError):
-    """上游调用失败。message 保留上游原文，继不静默吞错。"""
+    """上游调用失败。message 保留上游原文，绝不静默吞错。"""
 
     def __init__(
         self,
