@@ -1,0 +1,19 @@
+已完成 `site/` 静态展示站，本地预览在 **http://127.0.0.1:4173/**（保持运行中，方便你直接看）。
+
+**文件**
+- `site/index.html`、`site/style.css`（无构建工具，无 JS 依赖）
+- `site/img/ui-home.png`、`ui-flipped.png`、`ui-after-review.png`（从 `docs/evidence/` 复制）
+
+**页面结构**（内容全部对齐仓库里的 README/SPEC，未编造）
+1. 首屏：赛题 600078、队伍 星火辽源、赛号 AntTech_FG3WBV、作者信息
+2. 项目简介 + 「知识点 → 自评 → SM-2 → PowerContext 记忆」链路图
+3. 真实痛点 3 条（不知道哪里真不会 / 卡过的点第二天忘了 / 换设备会话进度丢失）
+4. 核心功能 4 条：笔记切卡片、今日复习（SM-2）、0–5 六档自评、记忆召回与核对
+5. 技术结合：写（scopes / remember / revise / review_log）与读（entries/list / context/prepare / memory/search / memory/raw）两栏 + 7 行接口表 + `card|…` 文本示例
+6. 界面截图 3 张（带说明，点击可看原图）
+7. 运行三步（含实际启动命令 `uv run --with fastapi … python -m server.app`，端口 8080、上游 `POWERCONTEXT_SERVER_URL` 默认 8000）
+8. 代码仓库链接 + 来源说明；页脚 Qoder 账号 UID 1614412229476632
+
+**已验证**（无头 Edge 实测，非仅代码检查）：1280 与 390 宽度下 `scrollWidth == clientWidth` 无横向溢出（表格/导航是容器内滚动）、3 张图均加载成功且都有 alt、7 个小节齐全、无 JS 异常与请求失败。深色雷达风配色沿用主应用调色板。
+
+需要我用 Qoder Sites 发布（README 里预留的 `weakradar.qoder.site`）吗？这会创建云端项目，所以我没有擅自执行。

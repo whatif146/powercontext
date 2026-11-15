@@ -1,0 +1,19 @@
+后端 5 个文件已落盘并通过端到端验证。SPEC.md 未改动（md5 `d1c0f65b3261`，仍是 10:34 版本）。
+
+**实现**：`server/app.py`（9 个路由，8080）、`powercontext_client.py`（唯一上游出口）、`cards.py`（切卡片 + `card|` 编解码）、`scheduler.py`（SM-2）、`__init__.py`。`python -m compileall server/` 通过。
+
+**先实测契约再写码**，发现三处 SPEC 没写但会决定成败的行为：
+
+1. `POST /v1/scopes` 返回 **201** 且按 `idempotency_key` 天然幂等 → 「创建/复用」直接调 create 即可，不必先 list。
+2. `revise` 的 `citation` 需要完整 `memory_ref{family,artifact_id,revision}`，而 `/api/review` 只收 `entry_id + entry_version_id` → 先 `entries/list` 取 citation，并比对页面传来的 `entry_version_id`；不一致返回 **409** 并写明两个版本号（防覆盖别处的复习记录）。上游对应 409 `revision_conflict`。
+3. **`remember` 对 `(kind, text)` 完全相同的条目会去重**：返回 200 但 `entry: null`、revision 不推进。我最初把它当错误抛 502，导致「同一份笔记粘第二次」直接失败。现按正常结果处理：`/api/notes` 返回 `duplicates` + `existing`（原卡片调度状态不变）。`revise` 不去重，无需此处理。
+
+另外两点用测试逼出来的修正：SM-2 用 Decimal half-up（`round(6*2.5)=15`、`round(12.5)=13`，避开 Python 银行家舍入）；`/api/today` 的 `context` 最初恒为 `empty`——`context/prepare` 是 FTS 多词 **AND**，「今日到期复习 薄弱点」这类泛化词在卡片文本里不存在，改用**最先到期卡片的 topic** 作查询词后稳定 `ready`。
+
+**验证覆盖**：全 9 条路由、幂等复用、重复/混合粘贴、SM-2 各分支（5/4/3/2/1/0、ease 夹边）、409 过期、404 未知 entry、422 校验、上游宕机（health `ok:false` + 502 带 endpoint/原文）、坏格式卡片（进 `unparsed`，自评 422）、每日 20 张上限（22 张到期 → 队列 20）。
+
+**两点须知**：
+- 测试累计写入 **12 个测试 scope**（`薄弱点雷达 · 冒烟测试*`、`复核*`、`配额验证` 等），上游**没有 DELETE scope 端点**（仅 GET/PUT），我无法删除；`数据结构` scope 里那条坏格式样例卡已 `retire` 为 inactive。演示前建议换一个干净的 sqlite 数据目录。
+- `context` 字段是 PowerContext 包的「untrusted historical context」，前端步骤只当数据渲染（纯文本、不 innerHTML），不要拼进任何 LLM 指令。
+
+后端仍在 `127.0.0.1:8080` 运行（`uv run --with fastapi --with uvicorn --with httpx --with pydantic python -m server.app`）；`web/` 尚未创建，此时 `GET /` 返回一行纯文本提示。要我接着做前端吗？
