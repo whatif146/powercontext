@@ -33,7 +33,7 @@ def _timeout() -> float:
     raw = os.environ.get("POWERCONTEXT_CLIENT_TIMEOUT", "")
     try:
         return float(raw)
-    except ValueamenteError:
+    except ValueError:
         return DEFAULT_TIMEOUT
 
 
